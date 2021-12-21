@@ -1,13 +1,12 @@
 package com.jetbrains.testcontainersdemo;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
@@ -15,30 +14,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 
-@SpringBootTest(classes = TestcontainersDemoApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@Testcontainers
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 public class CustomerIntegrationTests {
 
     @Autowired
     private CustomerDao customerDao;
 
-//    @Autowired
-//    public CustomerIntegrationTests(final CustomerDao customerDao) {
-//        this.customerDao = customerDao;
-//    }
+    private static MySQLContainer container = (MySQLContainer) new MySQLContainer("mysql:8.0.26")
+            .withDatabaseName("somedatabase") //we can omit this as well
+            .withReuse(true);
 
-    @Container
-    private static MySQLContainer container = new MySQLContainer("mysql:8.0.26");
-//            .withDatabaseName("somedatabase")
-//            .withUsername("root")
-//            .withPassword("letsgomarco");
+    @BeforeAll
+    public static void setup() {
+        container.start();
+    }
 
     @DynamicPropertySource
     public static void overrideProps(final DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", container::getJdbcUrl);
         registry.add("spring.datasource.username", container::getUsername);
         registry.add("spring.datasource.password", container::getPassword);
-
     }
 
     @Test
